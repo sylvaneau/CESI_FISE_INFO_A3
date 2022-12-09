@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Sockets;
+using System.Text;
 
 namespace WS_Socket.Server
 {
@@ -7,7 +8,15 @@ namespace WS_Socket.Server
     {
         static void Main(string[] args)
         {
-            Socket serverSocker = Connect();
+            using Socket serverSocket = Connect();
+
+            Socket clientSocket = AcceptConnection(serverSocket);
+            Listen(clientSocket);
+
+            Disconnect(clientSocket);
+
+            Console.WriteLine("Press Enter to exit");
+            Console.ReadLine();
         }
 
         private static Socket Connect()
@@ -32,6 +41,35 @@ namespace WS_Socket.Server
             }
 
             return clientSocket;
+        }
+
+        private static void Listen(Socket clientSocket)
+        {
+            while (true)
+            {
+                byte[] buffer = new byte[1024];
+                int bytesReceived = clientSocket.Receive(buffer);
+
+                string message = Encoding.UTF8.GetString(buffer, 0, bytesReceived);
+
+                Console.WriteLine("Client says: " + message);
+
+                if (message == "EXIT")
+                {
+                    break;
+                }
+
+                Console.WriteLine("Your answer: ");
+                string response = Console.ReadLine();
+
+                clientSocket.Send(Encoding.UTF8.GetBytes(response));
+            }
+        }
+
+        private static void Disconnect(Socket clientSocket)
+        {
+            clientSocket.Close();
+            clientSocket.Dispose();
         }
     }
 }
